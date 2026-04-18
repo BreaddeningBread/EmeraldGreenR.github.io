@@ -1,41 +1,39 @@
-<!doctypehtml>
-<html lang=en-us>
+<!doctype html>
+<html lang="en-us">
 <head>
+    <meta charset="utf-8">
+    <title>Doki Doki Literature Club!</title>
     </head>
 <body>
-    <canvas id=canvas oncontextmenu=event.preventDefault() tabindex=-1></canvas>
-    <img id=presplash src=web-presplash.jpg>
+    <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
     
     <script>
-        navigator.serviceWorker&&(navigator.serviceWorker.controller||navigator.serviceWorker.register("./service-worker.js",{updateViaCache:"all"}))
-    </script>
-
-    <script>
-        // Points to your nested GitHub folder to fix the "game/game" pathing
-        const GITHUB_PATH = "https://cdn.jsdelivr.net/gh/BreaddeningBread/EmeraldGreenR.github.io@main/game/game/";
+        // REDIRECT LOGIC: Bypasses 20MB limit by using the unzipped /game/game folder
+        const ASSET_PATH = "https://cdn.jsdelivr.net/gh/BreaddeningBread/EmeraldGreenR.github.io@main/game/game/";
 
         const originalFetch = window.fetch;
         window.fetch = async (...args) => {
             let url = args[0];
 
-            // 1. Force a 404 for game.zip to bypass the CDN limit and trigger folder-loading
+            // 1. Trick engine to stop looking for game.zip
             if (url.includes('game.zip')) {
-                console.log("Bypassing game.zip - loading from folder.");
                 return new Response(null, { status: 404 });
             }
 
-            // 2. Redirect asset requests from /game/ to /game/game/
+            // 2. Redirect asset calls from /game/ to /game/game/
             if (url.includes('/game/') && !url.endsWith('.js') && !url.endsWith('.wasm')) {
                 const fileName = url.split('/game/').pop();
-                const finalUrl = GITHUB_PATH + fileName;
-                return originalFetch(finalUrl);
+                return originalFetch(ASSET_PATH + fileName);
             }
 
             return originalFetch(...args);
         };
+
+        // Service Worker
+        navigator.serviceWorker && navigator.serviceWorker.register("./service-worker.js");
     </script>
 
-    <script src=renpy-pre.js></script>
-    <script src=renpy.js async></script>
+    <script src="renpy-pre.js"></script>
+    <script src="renpy.js" async></script>
 </body>
 </html>
