@@ -3,36 +3,37 @@
 <head>
     <meta charset="utf-8">
     <title>Doki Doki Literature Club!</title>
-    </head>
+    <style>
+        html, body { background: #000; height: 100%; margin: 0; overflow: hidden; }
+        canvas { width: 100%; height: 100%; }
+    </style>
+</head>
 <body>
     <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
-    
     <script>
-        // REDIRECT LOGIC: Bypasses 20MB limit by using the unzipped /game/game folder
-        const ASSET_PATH = "https://cdn.jsdelivr.net/gh/BreaddeningBread/EmeraldGreenR.github.io@main/game/game/";
+        // Use the exact unzipped path from your repo
+        const ASSET_BASE = "https://cdn.jsdelivr.net/gh/BreaddeningBread/EmeraldGreenR.github.io@main/game/game/";
 
         const originalFetch = window.fetch;
         window.fetch = async (...args) => {
-            let url = args[0];
+            let url = args[0].toString();
 
-            // 1. Trick engine to stop looking for game.zip
+            // 1. Kill the zip request
             if (url.includes('game.zip')) {
                 return new Response(null, { status: 404 });
             }
 
-            // 2. Redirect asset calls from /game/ to /game/game/
+            // 2. Redirect assets - The "What We Learnt" Logic
+            // If it's looking for a game file and it's NOT a system script
             if (url.includes('/game/') && !url.endsWith('.js') && !url.endsWith('.wasm')) {
-                const fileName = url.split('/game/').pop();
-                return originalFetch(ASSET_PATH + fileName);
+                const parts = url.split('/');
+                const fileName = parts[parts.length - 1]; // Get just the filename (e.g., script.rpy)
+                return originalFetch(ASSET_BASE + fileName);
             }
 
             return originalFetch(...args);
         };
-
-        // Service Worker
-        navigator.serviceWorker && navigator.serviceWorker.register("./service-worker.js");
     </script>
-
     <script src="renpy-pre.js"></script>
     <script src="renpy.js" async></script>
 </body>
